@@ -1,44 +1,36 @@
-const db = require("../../data/db-config.js");
+const db = require("../../data/db-config");
 
-const getAll = (query) => {
+
+const getAll = () => {
   // KODLAR BURAYA
-  const { sortby, sortdir, limit } = query;
-  if (sortby && sortdir && limit) {
-    return db("accounts")
-      .orderBy(query.sortby, query.sortdir)
-      .limit(query.limit);
-  } else return db("accounts");
-};
+  return db("accounts"); // select * from accounts
+}
 
-const getById = (id) => {
-  return db("accounts").where({ id }).first();
-};
-
-const getByName = (name) => {
-  return db("accounts").where({ name }).first();
-};
-
-const create = (account) => {
+const getById = id => {
   // KODLAR BURAYA
-  return db("accounts")
-    .insert({
-      name: account.name.trim(),
-      budget: account.budget,
-    })
-    .then((res) => getById(res));
-};
+ return db('accounts').where('id', id).first(); // select * from accounts where id = 1 limit 1
+}
 
-const updateById = (id, account) => {
-  // KODLAR BURAYA
-  return db("accounts")
-    .where({ id })
-    .update({ name: account.name, budget: account.budget });
-};
+const getByName = name =>{
+  return db('accounts').where('name', name).first();
+}
 
-const deleteById = (id) => {
+const create = async (account) => {
   // KODLAR BURAYA
-  return db("accounts").where({ id }).del();
-};
+  const inserted = await db("accounts").insert(account);// insert into accounts values (account)
+  return getById(inserted[0]);
+}
+
+const updateById = async (id, account) => {
+  // KODLAR BURAYA
+  await db("accounts").where("id",id).update(account);//update accounts set name=account.name,budget=account.budget where id=id
+  return getById(id);
+}
+
+const deleteById = id => {
+  // KODLAR BURAYA
+ return db("accounts").where("id",id).del();//delete accounts where id=id
+}
 
 module.exports = {
   getAll,
@@ -46,5 +38,5 @@ module.exports = {
   create,
   updateById,
   deleteById,
-  getByName,
-};
+  getByName
+}
