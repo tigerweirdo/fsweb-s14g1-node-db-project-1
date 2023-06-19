@@ -1,66 +1,41 @@
 const accountsModel = require("./accounts-model");
-const yup  = require("yup");
-
-const accountsScheme= yup.object().shape({
-  name: yup.string()
-        .min(3,"name of account must be between 3 and 100")
-        .max(100,"name of account must be between 3 and 100")
-        .required("name and budget are required"),
-  budget: yup.number("budget of account must be a number")
-          .min(0,"budget of account is too large or too small")
-          .max(1000000,"budget of account is too large or too small")
-          .required("name and budget are required")
-});
-
-exports.checkAccountPayload = async (req, res, next) => {
+exports.checkAccountPayload = (req, res, next) => {
   // KODLAR BURAYA
   // Not: Validasyon için Yup(şu an yüklü değil!) kullanabilirsiniz veya kendiniz manuel yazabilirsiniz.
   try {
-    let {budget,name} = req.body;
-    if(budget === undefined || name === undefined){
-      res.status(400).json({message:"name and budget are required"});
+    let {name,budget} = req.body;
+
+    if(name === undefined || budget === undefined){
+      res.status(400).json({message:"name and budget are required"})
+    }else if(name.trim().length<3 || name.trim().length>100){
+      res.status(400).json({message:"name of account must be between 3 and 100"})
+    }else if(typeof budget !== "number" || isNaN(budget)){
+      res.status(400).json({message:"budget of account must be a number"})
+    }else if(budget<0 || budget>1000000){
+      res.status(400).json({message:"budget of account is too large or too small"});
     }else{
-      if(req.body.name)
-        name = req.body.name.trim();
-      if(name.length<3 || name.length>100){
-        res.status(400).json({message:"name of account must be between 3 and 100"});
-      }else if(typeof budget !== "number"){
-        res.status(400).json({message:"budget of account must be a number"});
-      }else if(budget<0 || budget>1000000){
-        res.status(400).json({message:"budget of account is too large or too small"});
-      }else{
-         //await accountsScheme.validate(req.body);
-        req.body.name = name;
-        next();
-      }
+      req.body.name = req.body.name.trim();
+      next();
     }
   } catch (error) {
-    res.status(400).json({message:error.message});
+    next(error);
   }
 }
 
 exports.checkAccountNameUnique = async (req, res, next) => {
   // KODLAR BURAYA
   try {
-    let isExist= false;
     //BEGIN KÖTÜ ÇÖZÜM
-   /* const accountExist = await accountsModel.getAll(); //kayıt sayısı çok olunca performans problemine yol açar.
-    for (let i = 0; i < accountExist.length; i++) {
-      const item = accountExist[i];
-      if(item.name == req.body.name){
-        isExist = true;
-        break;
-      }
-    }*/
+    //const allAccounts = await accountsModel.getAll();
+    //const isExist = allAccounts.filter(x=>x.name == req.body.name);
     //END KÖTÜ ÇÖZÜM
 
-    //BEGIN İyi Çözüm
-    const existAccount = await accountsModel.getByName(req.body.name);
-    isExist = existAccount != null;
-    //END İyi çözüm
+    // BEGIN İYİ ÇÖZÜM
+    const isExist = await accountsModel.getByName(req.body.name);
+    // END İYİ ÇÖZÜM
 
     if(isExist){
-      res.status(400).json({message:"that name is taken"});
+      res.status(400).json({message:"that name is taken"})
     }else{
       next();
     }
@@ -69,14 +44,14 @@ exports.checkAccountNameUnique = async (req, res, next) => {
   }
 }
 
-exports.checkAccountId = async (req, res, next) => {
+exports.checkAccountId = async(req, res, next) => {
   // KODLAR BURAYA
   try {
-    const existAccount = await accountsModel.getById(req.params.id);
-    if(!existAccount){
+    const isExistAccount = await accountsModel.getById(req.params.id);
+    if(!isExistAccount){
       res.status(404).json({message:"account not found"});
     }else{
-      req.existAccount = existAccount;
+      req.existAccount = isExistAccount;
       next();
     }
   } catch (error) {

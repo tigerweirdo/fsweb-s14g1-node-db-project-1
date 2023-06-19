@@ -1,35 +1,42 @@
 const db = require("../../data/db-config");
 
-
-const getAll = () => {
+const getAll = async (limit,sortBy,sortDir) => {
   // KODLAR BURAYA
-  return db("accounts"); // select * from accounts
+  //select * from accounts
+  //knex('users').orderBy('name', 'desc')
+  //knex.select('*').from('users').limit(10)
+  limit = limit || await db("accounts").length;
+  sortBy = sortBy || "id";
+  sortDir = sortDir || "asc";
+  return db("accounts").orderBy(sortBy,sortDir).limit(limit);
 }
 
 const getById = id => {
   // KODLAR BURAYA
- return db('accounts').where('id', id).first(); // select * from accounts where id = 1 limit 1
+  //default select için return array formatındadır. First yapınca object {} formatında dönüyor.
+  return db("accounts").where("id",id).first();
 }
 
 const getByName = name =>{
-  return db('accounts').where('name', name).first();
+  //select * from accounts where name = '{name}' limit 1
+  return db("accounts").where("name",name).first();
 }
 
 const create = async (account) => {
   // KODLAR BURAYA
-  const inserted = await db("accounts").insert(account);// insert into accounts values (account)
-  return getById(inserted[0]);
+  const [id] = await db("accounts").insert(account);
+  return getById(id);
 }
 
 const updateById = async (id, account) => {
   // KODLAR BURAYA
-  await db("accounts").where("id",id).update(account);//update accounts set name=account.name,budget=account.budget where id=id
+ await  db("accounts").where("id",id).update(account);
   return getById(id);
 }
 
 const deleteById = id => {
   // KODLAR BURAYA
- return db("accounts").where("id",id).del();//delete accounts where id=id
+  return db("accounts").where("id",id).del();
 }
 
 module.exports = {
